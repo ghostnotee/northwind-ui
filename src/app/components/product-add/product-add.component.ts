@@ -5,6 +5,8 @@ import {
   FormControl,
   Validators,
 } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
+import { ProductService } from 'src/app/services/product.service';
 
 @Component({
   selector: 'app-product-add',
@@ -14,7 +16,11 @@ import {
 export class ProductAddComponent implements OnInit {
   productAddForm: FormGroup;
 
-  constructor(private formBuilder: FormBuilder) {}
+  constructor(
+    private formBuilder: FormBuilder,
+    private productService: ProductService,
+    private toastrService: ToastrService
+  ) {}
 
   ngOnInit(): void {
     this.createProductAddForm();
@@ -27,5 +33,28 @@ export class ProductAddComponent implements OnInit {
       unitsInStock: ['', Validators.required],
       categoryId: ['', Validators.required],
     });
+  }
+
+  add() {
+    if (this.productAddForm.valid) {
+      let productModel = Object.assign({}, this.productAddForm.value);
+      this.productService.add(productModel).subscribe(
+        (response) => {
+          this.toastrService.success(response.message, 'Başarılı');
+        },
+        (rError) => {
+          if (rError.error.ValidationErrors.length > 0) {
+            for (let i = 0; i < rError.error.ValidationErrors.length; i++) {
+              this.toastrService.error(
+                rError.error.ValidationErrors[i].ErrorMessage,
+                'Doğrulama hatası'
+              );
+            }
+          }
+        }
+      );
+    } else {
+      this.toastrService.error('Formunuz eksik', 'Dikkat');
+    }
   }
 }
